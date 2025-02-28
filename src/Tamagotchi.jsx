@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame, useLoader } from "@react-three/fiber";
 import { useShallow } from "zustand/react/shallow";
@@ -8,10 +8,35 @@ import * as THREE from "three";
 
 export default function Tamagotchi(props) {
   const tamagotchiRef = useRef();
-  const sleepingTexture = useLoader(
-    THREE.TextureLoader,
-    "/tamagotchi sleeping 1.jpeg"
-  );
+  const textureURLs = [
+    "/tamagotchi sleeping 1.jpeg",
+    "/tamagotchi sleeping 2.jpeg",
+    "/tamagotchi sleeping 4.jpeg",
+  ];
+  const sleepingTextures = useLoader(THREE.TextureLoader, textureURLs);
+
+  const randomTexture = useMemo(() => {
+    if (sleepingTextures && sleepingTextures.length > 0) {
+      const randomIndex = THREE.MathUtils.randInt(
+        0,
+        sleepingTextures.length - 1
+      );
+      return sleepingTextures[randomIndex];
+    }
+    return null;
+  }, [sleepingTextures]);
+
+  const getRandomTexture = () => {
+    if (sleepingTextures && sleepingTextures.length > 0) {
+      const randomIndex = THREE.MathUtils.randInt(
+        0,
+        sleepingTextures.length - 1
+      );
+      return sleepingTextures[randomIndex];
+    }
+    return null; // Or a default texture
+  };
+
   useFrame(() => {
     if (tamagotchiRef.current) {
       // tamagotchiRef.current.rotation.y += 0.01; // Spin for demo
@@ -28,7 +53,7 @@ export default function Tamagotchi(props) {
       >
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial
-          map={sleepingTexture}
+          map={getRandomTexture()}
           side={THREE.DoubleSide}
           transparent={false}
         />
