@@ -17,8 +17,6 @@ import { useGSAP } from "@gsap/react";
 import * as THREE from "three";
 import { ShaderMaterial } from "three";
 import Tamagotchi from "./Tamagotchi";
-import { useShallow } from "zustand/react/shallow";
-import { useStore } from "./store";
 
 export default function Egg(props) {
   const [isButtonAudioReady, setIsButtonAudioReady] = useState(false);
@@ -37,13 +35,8 @@ export default function Egg(props) {
   const [rotateZ, setRotateZ] = useState(0.0);
   const [isSleeping, setIsSleeping] = useState(false);
   const [isLocked, setIsLocked] = useState(false); //lock buttons when tamagotchi acton is in progress
-
-  const { isGrown, setIsGrown } = useStore(
-    useShallow((s) => ({
-      isGrown: s.isGrown,
-      setIsGrown: s.setIsGrown,
-    }))
-  );
+  const [isGrown, setIsGrown] = useState(false);
+  const [tamagotchiSize, setTamagotchiSize] = useState(1);
 
   const playSound = async (soundName) => {
     const sound = soundsRef.current[soundName];
@@ -119,7 +112,8 @@ export default function Egg(props) {
       await wait(0.6); // Wait for 1 second
       playSound("yummy");
     }
-    const newScale = scale + 0.2;
+
+    const newScale = scale + 0.5;
     const scaleObj = { value: scale };
     gsap.to(scaleObj, {
       duration: 0.6, // 1 second
@@ -129,6 +123,7 @@ export default function Egg(props) {
       onUpdate: () => setScale(scaleObj.value),
     });
     setIsLocked(false);
+    setTamagotchiSize(tamagotchiSize + 1);
   };
 
   const sleepingClick = async (e) => {
@@ -141,31 +136,9 @@ export default function Egg(props) {
       await playSound("button_click");
       await playSound("yawn");
     }
-    await wait(0.6); // Wait for 1 second
+    await wait(1.6); // Wait for 1 second
     setIsSleeping(false);
     setIsLocked(false);
-
-    // const tl = gsap.timeline();
-    // const rotateYValInit = Math.PI / 2;
-    // const rotateYValTo = -Math.PI / 2;
-    // const rotateXValInit = Math.PI;
-    // const rotateXValTo = Math.PI / 2;
-    // const rotateObj = { value: rotateY };
-    // gsap
-    //   .to(rotateObj, {
-    //     duration: 0.6,
-    //     value: rotateObj.value + Math.PI * 2,
-    //     ease: "power2.inOut",
-    //     onComplete: () => setRotateY(rotateYValTo),
-    //     onUpdate: () => setRotateY(rotateObj.value),
-    //   })
-    //   .to(rotateObj, {
-    //     duration: 0.6,
-    //     value: rotateObj.value + Math.PI * 2,
-    //     ease: "power2.inOut",
-    //     onComplete: () => setRotateY(rotateYValTo),
-    //     onUpdate: () => setRotateY(rotateObj.value),
-    //   });
   };
 
   const playingClick = (e) => {
@@ -206,105 +179,119 @@ export default function Egg(props) {
     // }
   });
 
+  if (tamagotchiSize < 5) {
+    return (
+      <group {...props} dispose={null}>
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.egg_body.geometry}
+          material={materials["egg shell"]}
+          rotation={[0, 0.138, 0]}
+          scale={1.721}
+        />
+        <mesh
+          castShadow
+          receiveShadow
+          geometry={nodes.screen.geometry}
+          position={[0.047, 0.814, 0.871]}
+          rotation={[1.488, 0, 0]}
+        >
+          <meshStandardMaterial>
+            <RenderTexture
+              attach="map"
+              anisotropy={16}
+              ref={textureRef}
+              camera={renderCamera.current}
+            >
+              <PerspectiveCamera
+                lookAt={[0, 0, 0]}
+                makeDefault
+                aspect={1}
+                position={[0, 0, 2.5]}
+                ref={renderCamera}
+                fov={55}
+                near={0.1}
+                far={1000}
+              />
+              ;
+              <color attach="background" args={["grey"]} />
+              <ambientLight intensity={1.0} />
+              {/* <ShaderPlane ref={shaderRef} /> */}
+              <Tamagotchi
+                scale={scale}
+                rotation={[rotateX, rotateY, rotateZ]}
+                position={[0, 0, 0]}
+                sleeping={isSleeping}
+              />
+              <ambientLight intensity={1.0} />
+              <directionalLight position={[10, 10, 5]} />
+              <pointLight position={[0, 0, 5]} intensity={1.0} />
+            </RenderTexture>
+          </meshStandardMaterial>
+        </mesh>
+        <mesh
+          ref={blueButtonRef}
+          castShadow
+          receiveShadow
+          geometry={nodes.button1.geometry}
+          material={materials["Material.003"]}
+          position={[0.043, -0.572, 0.898]}
+          scale={0.237}
+          onClick={sleepingClick}
+          onPointerDown={() =>
+            (blueButtonRef.current.material = materials["shiny_button"])
+          } // Visual feedback
+          onPointerUp={() =>
+            (blueButtonRef.current.material = materials["Material.003"])
+          }
+        />
+        <mesh
+          ref={redButtonRef}
+          castShadow
+          receiveShadow
+          geometry={nodes.button2.geometry}
+          material={materials["Material.002"]}
+          position={[0.653, -0.572, 0.898]}
+          scale={0.237}
+          onClick={eatingClick}
+          onPointerDown={() =>
+            (redButtonRef.current.material = materials["shiny_button"])
+          } // Visual feedback
+          onPointerUp={() =>
+            (redButtonRef.current.material = materials["Material.002"])
+          }
+        />
+        <mesh
+          ref={greenButtonRef}
+          castShadow
+          receiveShadow
+          geometry={nodes.button3.geometry}
+          material={materials["Material.004"]}
+          position={[-0.572, -0.572, 0.898]}
+          scale={0.237}
+          onClick={playingClick}
+          onPointerDown={() =>
+            (greenButtonRef.current.material = materials["shiny_button"])
+          } // Visual feedback
+          onPointerUp={() =>
+            (greenButtonRef.current.material = materials["Material.004"])
+          }
+        />
+      </group>
+    );
+  }
   return (
-    <group {...props} dispose={null}>
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.egg_body.geometry}
-        material={materials["egg shell"]}
-        rotation={[0, 0.138, 0]}
-        scale={1.721}
-      />
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.screen.geometry}
-        position={[0.047, 0.814, 0.871]}
-        rotation={[1.488, 0, 0]}
-      >
-        <meshStandardMaterial>
-          <RenderTexture
-            attach="map"
-            anisotropy={16}
-            ref={textureRef}
-            camera={renderCamera.current}
-          >
-            <PerspectiveCamera
-              lookAt={[0, 0, 0]}
-              makeDefault
-              aspect={1}
-              position={[0, 0, 2.5]}
-              ref={renderCamera}
-              fov={55}
-              near={0.1}
-              far={1000}
-            />
-            ;
-            <color attach="background" args={["grey"]} />
-            <ambientLight intensity={1.0} />
-            {/* <ShaderPlane ref={shaderRef} /> */}
-            <Tamagotchi
-              scale={scale}
-              rotation={[rotateX, rotateY, rotateZ]}
-              position={[0, 0, 0]}
-              sleeping={isSleeping}
-            />
-            <ambientLight intensity={1.0} />
-            <directionalLight position={[10, 10, 5]} />
-            <pointLight position={[0, 0, 5]} intensity={1.0} />
-          </RenderTexture>
-        </meshStandardMaterial>
-      </mesh>
-      <mesh
-        ref={blueButtonRef}
-        castShadow
-        receiveShadow
-        geometry={nodes.button1.geometry}
-        material={materials["Material.003"]}
-        position={[0.043, -0.572, 0.898]}
-        scale={0.237}
-        onClick={sleepingClick}
-        onPointerDown={() =>
-          (blueButtonRef.current.material = materials["shiny_button"])
-        } // Visual feedback
-        onPointerUp={() =>
-          (blueButtonRef.current.material = materials["Material.003"])
-        }
-      />
-      <mesh
-        ref={redButtonRef}
-        castShadow
-        receiveShadow
-        geometry={nodes.button2.geometry}
-        material={materials["Material.002"]}
-        position={[0.653, -0.572, 0.898]}
-        scale={0.237}
-        onClick={eatingClick}
-        onPointerDown={() =>
-          (redButtonRef.current.material = materials["shiny_button"])
-        } // Visual feedback
-        onPointerUp={() =>
-          (redButtonRef.current.material = materials["Material.002"])
-        }
-      />
-      <mesh
-        ref={greenButtonRef}
-        castShadow
-        receiveShadow
-        geometry={nodes.button3.geometry}
-        material={materials["Material.004"]}
-        position={[-0.572, -0.572, 0.898]}
-        scale={0.237}
-        onClick={playingClick}
-        onPointerDown={() =>
-          (greenButtonRef.current.material = materials["shiny_button"])
-        } // Visual feedback
-        onPointerUp={() =>
-          (greenButtonRef.current.material = materials["Material.004"])
-        }
-      />
-    </group>
+    <Tamagotchi
+      scale={[7, 7, 7]}
+      rotation={[0, -Math.PI / 2, 0]}
+      position={[0, 0, 0]}
+      sleeping={false}
+      onClick={() => {
+        setTamagotchiSize(1);
+        setScale(1.5);
+      }}
+    />
   );
 }
 

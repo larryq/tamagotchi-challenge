@@ -49,7 +49,7 @@ export default function App() {
           minAzimuthAngle={-Math.PI / 8}
           maxAzimuthAngle={Math.PI / 8}
         />
-        <Html
+        {/* <Html
           position={[-4, 2, 0]} // Initial 3D position (adjusted by transform)
           transform={false} // Prevents it from being affected by 3D transforms
           style={{
@@ -62,7 +62,7 @@ export default function App() {
           }}
         >
           Upper Left Text
-        </Html>
+        </Html> */}
 
         {/* <Sparkles color="white" count={1200} scale={10} size={1.5} /> */}
       </Suspense>

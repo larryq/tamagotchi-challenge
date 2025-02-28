@@ -24,7 +24,7 @@ export default function Tamagotchi(props) {
         ref={tamagotchiRef}
         position={[0, 0, 0]}
         rotation={[0, 0, Math.PI]}
-        scale={[4, 4, 4]}
+        scale={[5, 4, 4]}
       >
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial
